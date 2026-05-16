@@ -8,6 +8,9 @@
     3. האם הסרתי Google Fonts? כן.
     4. האם הסרתי Tailwind CDN? כן.
     5. האם הקובץ עובד כ־HTML + CSS + Vanilla JS בלבד? כן.
+    6. האם fetch משתמש ב־Content-Type: text/plain;charset=utf-8? כן.
+    7. האם יש טיפול בתגובה שאינה JSON תקין? כן.
+    8. האם יש הודעה ברורה במקרה של חסימת CORS / Failed to fetch? כן.
   -->
 
   <meta charset="UTF-8" />
@@ -206,21 +209,6 @@
       border-radius: 18px;
     }
 
-    .input-shell::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: 19px;
-      background: linear-gradient(135deg, rgba(34, 211, 238, 0.42), rgba(129, 140, 248, 0.25), rgba(255, 255, 255, 0.8));
-      opacity: 0;
-      transition: opacity 0.25s ease;
-      pointer-events: none;
-    }
-
-    .input-shell:focus-within::before {
-      opacity: 1;
-    }
-
     input,
     select {
       position: relative;
@@ -237,7 +225,7 @@
         0 8px 22px rgba(15, 23, 42, 0.04);
       font: inherit;
       font-weight: 700;
-      transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
     }
 
     input:focus,
@@ -482,20 +470,6 @@
       overflow-x: auto;
     }
 
-    .table-wrap::-webkit-scrollbar {
-      height: 10px;
-    }
-
-    .table-wrap::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.08);
-      border-radius: 999px;
-    }
-
-    .table-wrap::-webkit-scrollbar-thumb {
-      background: linear-gradient(90deg, #14b8a6, #3b82f6, #6366f1);
-      border-radius: 999px;
-    }
-
     table {
       width: 100%;
       min-width: 720px;
@@ -660,10 +634,6 @@
         text-align: center;
       }
 
-      .loader-content {
-        text-align: center;
-      }
-
       .loader-orbit {
         margin: 0 auto;
       }
@@ -805,13 +775,7 @@
       };
 
       try {
-        const response = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
+        const result = await postToAppsScript(payload);
 
         if (result.status !== "success") {
           throw new Error(result.message || "אירעה שגיאה לא ידועה");
@@ -828,7 +792,7 @@
         exportActions.classList.remove("hidden");
 
       } catch (error) {
-        showError("אופס! לא הצלחנו לטעון את הנתונים. " + error.message);
+        showError(error.message);
       }
     });
 
@@ -870,24 +834,65 @@
       };
 
       try {
-        const response = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
+        const result = await postToAppsScript(payload);
 
         if (result.status !== "success") {
           throw new Error(result.message || "אירעה שגיאה לא ידועה");
         }
 
+        if (!result.sheetUrl) {
+          throw new Error("השרת לא החזיר קישור לגיליון.");
+        }
+
         showSheetSuccess(result.sheetUrl);
 
       } catch (error) {
-        showError("אופס! לא הצלחנו לייצא ל־Google Sheets. " + error.message);
+        showError(error.message);
       }
     });
+
+    async function postToAppsScript(payload) {
+      let response;
+
+      try {
+        response = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        throw new Error(
+          "אופס! הדפדפן לא הצליח להתחבר ל־Google Apps Script. " +
+          "אם אתה מריץ את האתר מדומיין אחר, ייתכן שזו חסימת CORS. " +
+          "בדוק שה־Web App פורסם עם גישה ל־Anyone, ונסה לפתוח את הקישור של הסקריפט ישירות בדפדפן."
+        );
+      }
+
+      let text = "";
+
+      try {
+        text = await response.text();
+      } catch (error) {
+        throw new Error("התקבלה תגובה מהשרת, אבל לא ניתן היה לקרוא אותה.");
+      }
+
+      if (!response.ok) {
+        throw new Error("השרת החזיר שגיאה: " + response.status + ". " + text.slice(0, 160));
+      }
+
+      if (!text || !text.trim()) {
+        throw new Error("השרת החזיר תגובה ריקה.");
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        throw new Error(
+          "השרת לא החזיר JSON תקין. ייתכן שהתקבלה שגיאת הרשאות או דף HTML במקום נתונים. תחילת התגובה: " +
+          text.slice(0, 180)
+        );
+      }
+    }
 
     function validateForm() {
       const tickers = document.getElementById("tickers").value.trim();
