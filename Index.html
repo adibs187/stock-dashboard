@@ -1,359 +1,157 @@
+<!--
+✅ בדיקת חובה לפני קוד:
+1. האם וידאתי ש־mode: 'no-cors' לא מופיע בכלל בקוד? כן.
+2. האם אכפתי את מפתחות ה־payload המדויקים בלבד: tickers, startDate, endDate, frequency, action? כן.
+-->
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <!--
-    CHECKLIST - בדיקת כשלים קריטיים:
-    1. האם וידאתי ש־mode: 'no-cors' הושמט לחלוטין? כן.
-    2. האם אכפתי את מפתחות ה־payload המדויקים: tickers, startDate, endDate, frequency, action? כן.
-    3. האם הסרתי Google Fonts? כן.
-    4. האם הסרתי Tailwind CDN? כן.
-    5. האם הסרתי fetch חיצוני ל־Apps Script כדי למנוע CORS? כן.
-    6. האם הקוד משתמש ב־google.script.run במקום fetch? כן.
-  -->
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>מערכת חילוץ נתוני מניות</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
     * {
       box-sizing: border-box;
     }
 
-    html {
-      scroll-behavior: smooth;
-    }
-
     body {
-      margin: 0;
       min-height: 100vh;
-      direction: rtl;
       overflow-x: hidden;
-      color: #0f172a;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.25), transparent 34%),
-        radial-gradient(circle at 85% 12%, rgba(99, 102, 241, 0.32), transparent 33%),
-        radial-gradient(circle at 40% 90%, rgba(16, 185, 129, 0.22), transparent 38%),
-        linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%);
+        radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.28), transparent 32%),
+        radial-gradient(circle at 85% 15%, rgba(168, 85, 247, 0.25), transparent 34%),
+        radial-gradient(circle at 50% 85%, rgba(20, 184, 166, 0.22), transparent 34%),
+        linear-gradient(135deg, #f8fafc 0%, #eef2ff 45%, #f0fdfa 100%);
     }
 
-    .mesh-layer {
+    .mesh {
       position: fixed;
-      inset: -35%;
-      z-index: 0;
+      inset: 0;
+      z-index: -3;
       background:
-        radial-gradient(circle at 30% 30%, rgba(45, 212, 191, 0.18), transparent 26%),
-        radial-gradient(circle at 70% 40%, rgba(59, 130, 246, 0.18), transparent 30%),
-        radial-gradient(circle at 45% 75%, rgba(168, 85, 247, 0.16), transparent 28%);
-      filter: blur(36px);
-      animation: meshMove 20s ease-in-out infinite alternate;
-      pointer-events: none;
+        radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.22), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(124, 58, 237, 0.18), transparent 30%),
+        radial-gradient(circle at 55% 75%, rgba(45, 212, 191, 0.18), transparent 28%);
+      filter: blur(10px);
+      animation: drift 18s ease-in-out infinite alternate;
     }
 
-    @keyframes meshMove {
+    @keyframes drift {
       0% {
-        transform: translate3d(-4%, 2%, 0) scale(1);
+        transform: scale(1) translate3d(0, 0, 0);
       }
-
       100% {
-        transform: translate3d(5%, -5%, 0) scale(1.08);
+        transform: scale(1.12) translate3d(-35px, 25px, 0);
       }
     }
 
     .particle {
       position: fixed;
-      z-index: 1;
-      width: 7px;
-      height: 7px;
+      width: 9px;
+      height: 9px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.45);
-      box-shadow:
-        0 0 20px rgba(125, 211, 252, 0.95),
-        0 0 45px rgba(45, 212, 191, 0.55);
-      animation: floatParticle linear infinite;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 26px rgba(59, 130, 246, 0.55);
+      z-index: -2;
+      animation: float 9s ease-in-out infinite;
+    }
+
+    .particle:nth-child(2) {
+      top: 16%;
+      right: 14%;
+      animation-delay: -2s;
+    }
+
+    .particle:nth-child(3) {
+      top: 72%;
+      right: 9%;
+      animation-delay: -5s;
+    }
+
+    .particle:nth-child(4) {
+      top: 30%;
+      left: 12%;
+      animation-delay: -1s;
+    }
+
+    .particle:nth-child(5) {
+      top: 78%;
+      left: 18%;
+      animation-delay: -7s;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.55;
+      }
+      50% {
+        transform: translateY(-34px) scale(1.35);
+        opacity: 1;
+      }
+    }
+
+    .premium-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .premium-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(59,130,246,0.35), rgba(20,184,166,0.35));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
       pointer-events: none;
     }
 
-    @keyframes floatParticle {
-      from {
-        transform: translateY(115vh) translateX(0) scale(0.85);
-        opacity: 0;
-      }
-
-      20% {
-        opacity: 1;
-      }
-
-      75% {
-        opacity: 1;
-      }
-
-      to {
-        transform: translateY(-18vh) translateX(85px) scale(1.15);
-        opacity: 0;
-      }
-    }
-
-    .page {
+    .glow-button {
       position: relative;
-      z-index: 10;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 16px;
-    }
-
-    .card {
-      position: relative;
-      width: 100%;
-      max-width: 1150px;
-      border-radius: 32px;
-      padding: 28px;
-      background: rgba(255, 255, 255, 0.82);
-      box-shadow:
-        0 28px 90px rgba(15, 23, 42, 0.38),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
+      overflow: hidden;
       isolation: isolate;
     }
 
-    .card::before {
+    .glow-button::before {
       content: "";
       position: absolute;
-      inset: -1px;
+      inset: -80%;
+      background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.9), transparent, rgba(45,212,191,0.8), transparent);
+      animation: rotateGlow 3.8s linear infinite;
+      z-index: -2;
+    }
+
+    .glow-button::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, #2563eb, #7c3aed, #0f766e);
       z-index: -1;
-      border-radius: 33px;
-      background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.9),
-        rgba(34, 211, 238, 0.42),
-        rgba(129, 140, 248, 0.42),
-        rgba(16, 185, 129, 0.28)
-      );
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+    @keyframes rotateGlow {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loader-ring {
+      width: 54px;
+      height: 54px;
       border-radius: 999px;
-      padding: 9px 16px;
-      background: rgba(15, 23, 42, 0.94);
-      color: #cffafe;
-      font-size: 14px;
-      font-weight: 900;
-      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.28);
-    }
-
-    .badge-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #34d399;
-      box-shadow: 0 0 18px rgba(52, 211, 153, 1);
-    }
-
-    h1 {
-      margin: 24px 0 0;
-      font-size: clamp(38px, 6vw, 72px);
-      line-height: 1.02;
-      letter-spacing: -1px;
-      font-weight: 1000;
-      color: #020617;
-    }
-
-    .gradient-title {
-      display: block;
-      background: linear-gradient(270deg, #06b6d4, #2563eb, #7c3aed);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .intro {
-      max-width: 880px;
-      margin: 20px 0 34px;
-      color: #475569;
-      font-size: 18px;
-      line-height: 1.8;
-      font-weight: 500;
-    }
-
-    .form {
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-
-    .field label {
-      display: block;
-      margin-bottom: 8px;
-      color: #1e293b;
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    input,
-    select {
-      width: 100%;
-      height: 52px;
-      border: 1px solid rgba(255, 255, 255, 0.75);
-      border-radius: 18px;
-      outline: none;
-      padding: 0 16px;
-      color: #020617;
-      background: rgba(255, 255, 255, 0.82);
-      box-shadow:
-        inset 0 2px 8px rgba(15, 23, 42, 0.06),
-        0 8px 22px rgba(15, 23, 42, 0.04);
-      font: inherit;
-      font-weight: 700;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: #22d3ee;
-      box-shadow:
-        0 0 0 4px rgba(103, 232, 249, 0.32),
-        inset 0 2px 8px rgba(15, 23, 42, 0.04);
-    }
-
-    .helper {
-      margin: 8px 0 0;
-      color: #64748b;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .main-button {
-      position: relative;
-      width: 100%;
-      border: 0;
-      border-radius: 20px;
-      padding: 18px 28px;
-      cursor: pointer;
-      overflow: hidden;
-      color: white;
-      background: linear-gradient(270deg, #06b6d4, #2563eb, #7c3aed);
-      font-size: 19px;
-      font-weight: 1000;
-      box-shadow:
-        0 20px 50px rgba(37, 99, 235, 0.36),
-        0 8px 24px rgba(20, 184, 166, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.18s ease, filter 0.18s ease;
-    }
-
-    .main-button:hover {
-      transform: scale(1.01);
-      filter: saturate(1.1);
-    }
-
-    .main-button:active {
-      transform: scale(0.99);
-    }
-
-    #messageArea {
-      margin-top: 28px;
-    }
-
-    #previewTable {
-      margin-top: 32px;
-    }
-
-    .alert {
-      border-radius: 28px;
-      padding: 22px;
-      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14);
-      border: 1px solid;
-    }
-
-    .alert-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-
-    .alert-icon {
-      flex: 0 0 auto;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 16px;
-      color: white;
-      font-size: 22px;
-      font-weight: 1000;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
-    }
-
-    .alert h2 {
-      margin: 0;
-      font-size: 19px;
-      font-weight: 1000;
-    }
-
-    .alert p {
-      margin: 6px 0 0;
-      line-height: 1.7;
-      font-weight: 650;
-    }
-
-    .alert-error {
-      background: rgba(255, 241, 242, 0.92);
-      border-color: #fecdd3;
-    }
-
-    .alert-error .alert-icon {
-      background: #f43f5e;
-    }
-
-    .alert-success {
-      background: rgba(236, 253, 245, 0.92);
-      border-color: #a7f3d0;
-    }
-
-    .alert-success .alert-icon {
-      background: #10b981;
-    }
-
-    .loader-card {
-      border-radius: 28px;
-      padding: 26px;
-      border: 1px solid rgba(165, 243, 252, 0.85);
-      background: rgba(236, 254, 255, 0.9);
-      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14);
-    }
-
-    .loader-content {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 18px;
-      text-align: right;
-    }
-
-    .loader-orbit {
-      width: 64px;
-      height: 64px;
-      border-radius: 999px;
-      border: 4px solid rgba(14, 165, 233, 0.14);
-      border-top-color: #06b6d4;
-      border-left-color: #10b981;
-      border-bottom-color: #6366f1;
-      animation: spin 0.9s linear infinite;
-      flex: 0 0 auto;
+      border: 4px solid rgba(59, 130, 246, 0.18);
+      border-top-color: #2563eb;
+      border-left-color: #14b8a6;
+      animation: spin 0.85s linear infinite;
     }
 
     @keyframes spin {
@@ -362,283 +160,129 @@
       }
     }
 
-    .loader-title {
-      margin: 0;
-      color: #020617;
-      font-size: 21px;
-      font-weight: 1000;
+    .fade-in {
+      animation: fadeIn 0.45s ease both;
     }
 
-    .loader-text {
-      margin: 5px 0 0;
-      color: #475569;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .table-card {
-      overflow: hidden;
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.75);
-      background: rgba(255, 255, 255, 0.78);
-      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
-    }
-
-    .table-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      padding: 22px;
-      border-bottom: 1px solid #e2e8f0;
-      background: rgba(255, 255, 255, 0.78);
-    }
-
-    .table-header h2 {
-      margin: 0;
-      color: #020617;
-      font-size: 26px;
-      font-weight: 1000;
-    }
-
-    .table-header p {
-      margin: 4px 0 0;
-      color: #64748b;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .rows-pill {
-      border-radius: 999px;
-      background: #cffafe;
-      color: #155e75;
-      padding: 9px 15px;
-      font-size: 14px;
-      font-weight: 1000;
-      white-space: nowrap;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      min-width: 720px;
-      border-collapse: collapse;
-    }
-
-    th {
-      padding: 16px 20px;
-      text-align: right;
-      border-bottom: 1px solid #e2e8f0;
-      background: #020617;
-      color: #cffafe;
-      font-size: 14px;
-      font-weight: 1000;
-      white-space: nowrap;
-    }
-
-    td {
-      padding: 16px 20px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #334155;
-      font-size: 14px;
-      font-weight: 750;
-      white-space: nowrap;
-    }
-
-    td:first-child {
-      color: #020617;
-      font-weight: 950;
-    }
-
-    tbody tr:nth-child(odd) {
-      background: rgba(255, 255, 255, 0.76);
-    }
-
-    tbody tr:nth-child(even) {
-      background: rgba(248, 250, 252, 0.76);
-    }
-
-    tbody tr:hover {
-      background: rgba(236, 254, 255, 0.92);
-    }
-
-    #exportActions {
-      margin-top: 28px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-
-    #exportActions.hidden {
-      display: none;
-    }
-
-    .export-button {
-      border: 0;
-      border-radius: 20px;
-      padding: 17px 24px;
-      cursor: pointer;
-      color: white;
-      font-size: 16px;
-      font-weight: 1000;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-    }
-
-    .csv-button {
-      background: #020617;
-    }
-
-    .sheet-button {
-      background: linear-gradient(270deg, #10b981, #0f766e);
-    }
-
-    .sheet-success-card {
-      border-radius: 28px;
-      border: 1px solid #a7f3d0;
-      background: linear-gradient(270deg, rgba(236, 253, 245, 0.94), rgba(240, 253, 250, 0.94));
-      padding: 26px;
-      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14);
-    }
-
-    .sheet-success-content {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .sheet-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 18px;
-      padding: 13px 22px;
-      background: #059669;
-      color: white;
-      text-decoration: none;
-      font-weight: 1000;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 950px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
-    @media (max-width: 640px) {
-      .page {
-        padding: 18px 12px;
-      }
+    input,
+    select {
+      outline: none;
+    }
 
-      .card {
-        padding: 20px;
-        border-radius: 26px;
-      }
-
-      .grid,
-      #exportActions {
-        grid-template-columns: 1fr;
-      }
-
-      .loader-content,
-      .sheet-success-content,
-      .table-header {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-      }
-
-      .loader-orbit {
-        margin: 0 auto;
-      }
-
-      h1 {
-        font-size: 38px;
-      }
-
-      .intro {
-        font-size: 16px;
-      }
+    input:focus,
+    select:focus {
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+      border-color: rgba(37, 99, 235, 0.65);
     }
   </style>
 </head>
 
-<body>
-  <div class="mesh-layer"></div>
+<body class="text-slate-900">
+  <div class="mesh"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
 
-  <div class="particle" style="left: 5%; animation-duration: 15s; animation-delay: -2s;"></div>
-  <div class="particle" style="left: 14%; animation-duration: 22s; animation-delay: -11s;"></div>
-  <div class="particle" style="left: 24%; animation-duration: 18s; animation-delay: -7s;"></div>
-  <div class="particle" style="left: 39%; animation-duration: 20s; animation-delay: -4s;"></div>
-  <div class="particle" style="left: 52%; animation-duration: 16s; animation-delay: -12s;"></div>
-  <div class="particle" style="left: 68%; animation-duration: 24s; animation-delay: -9s;"></div>
-  <div class="particle" style="left: 81%; animation-duration: 19s; animation-delay: -5s;"></div>
-  <div class="particle" style="left: 93%; animation-duration: 17s; animation-delay: -13s;"></div>
-
-  <main class="page">
-    <section class="card">
-      <header>
-        <div class="badge">
-          <span class="badge-dot"></span>
-          <span>מסוף נתונים פיננסי</span>
+  <main class="min-h-screen px-4 py-10 sm:px-6 lg:px-8 flex items-center justify-center">
+    <section class="premium-card w-full max-w-6xl backdrop-blur-xl bg-white/80 shadow-2xl rounded-[2rem] p-6 sm:p-8 lg:p-10">
+      <header class="mb-8">
+        <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.95)]"></span>
+          מערכת פיננסית חכמה
         </div>
 
-        <h1>
-          חילוץ שערי סגירה
-          <span class="gradient-title">למניות בזמן אמת</span>
+        <h1 class="mt-5 text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-l from-blue-700 via-violet-700 to-teal-700 bg-clip-text text-transparent">
+          חילוץ שערי סגירה למניות
         </h1>
 
-        <p class="intro">
+        <p class="mt-4 max-w-4xl text-lg leading-8 text-slate-600">
           ברוכים הבאים למערכת חילוץ הנתונים. כאן תוכלו לשלוף שערי סגירה למספר מניות במקביל, להשוות ביניהן בסדרות-זמן, ולייצא בקליק.
         </p>
       </header>
 
-      <form id="stockForm" class="form">
-        <div class="grid">
-          <div class="field">
-            <label for="tickers">סימולי מניות</label>
-            <input id="tickers" type="text" placeholder="AAPL, MSFT, NVDA" />
-            <p class="helper">הזן סימולי מניות, מופרדים בפסיק</p>
-          </div>
-
-          <div class="field">
-            <label for="startDate">תאריך התחלה</label>
-            <input id="startDate" type="date" />
-          </div>
-
-          <div class="field">
-            <label for="endDate">תאריך סיום</label>
-            <input id="endDate" type="date" />
-          </div>
-
-          <div class="field">
-            <label for="frequency">תדירות</label>
-            <select id="frequency">
-              <option value="daily">יומי</option>
-              <option value="weekly">שבועי</option>
-              <option value="monthly">חודשי</option>
-            </select>
-          </div>
+      <form id="stockForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="lg:col-span-2">
+          <label for="tickers" class="mb-2 block text-sm font-extrabold text-slate-700">סימולי מניות</label>
+          <input
+            id="tickers"
+            type="text"
+            placeholder="לדוגמה: AAPL, MSFT, TSLA"
+            class="w-full rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-slate-900 shadow-inner transition"
+          />
+          <p class="mt-2 text-sm text-slate-500">הזן סימולי מניות, מופרדים בפסיק</p>
         </div>
 
-        <button id="loadBtn" type="submit" class="main-button">
-          טען נתונים
-        </button>
+        <div>
+          <label for="startDate" class="mb-2 block text-sm font-extrabold text-slate-700">תאריך התחלה</label>
+          <input
+            id="startDate"
+            type="date"
+            class="w-full rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-slate-900 shadow-inner transition"
+          />
+        </div>
+
+        <div>
+          <label for="endDate" class="mb-2 block text-sm font-extrabold text-slate-700">תאריך סיום</label>
+          <input
+            id="endDate"
+            type="date"
+            class="w-full rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-slate-900 shadow-inner transition"
+          />
+        </div>
+
+        <div class="md:col-span-2 lg:col-span-4">
+          <label for="frequency" class="mb-2 block text-sm font-extrabold text-slate-700">תדירות</label>
+          <select
+            id="frequency"
+            class="w-full rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-slate-900 shadow-inner transition"
+          >
+            <option value="daily">daily</option>
+            <option value="weekly">weekly</option>
+            <option value="monthly">monthly</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-2 lg:col-span-4 pt-2">
+          <button
+            id="loadBtn"
+            type="submit"
+            class="glow-button w-full rounded-2xl px-8 py-4 text-lg font-black text-white shadow-2xl transition hover:scale-[1.01] active:scale-[0.99]"
+          >
+            טען נתונים
+          </button>
+        </div>
       </form>
 
-      <div id="messageArea"></div>
-      <div id="previewTable"></div>
+      <div id="messageArea" class="mt-7"></div>
 
-      <div id="exportActions" class="hidden">
-        <button id="downloadCsvBtn" type="button" class="export-button csv-button">
+      <div id="previewTable" class="mt-8"></div>
+
+      <div id="exportActions" class="hidden mt-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <button
+          id="downloadCsvBtn"
+          type="button"
+          class="rounded-2xl bg-slate-950 px-6 py-4 font-black text-white shadow-xl transition hover:-translate-y-1 hover:shadow-2xl"
+        >
           הורד כ-CSV
         </button>
 
-        <button id="exportSheetBtn" type="button" class="export-button sheet-button">
+        <button
+          id="exportSheetBtn"
+          type="button"
+          class="rounded-2xl bg-gradient-to-l from-emerald-600 to-teal-600 px-6 py-4 font-black text-white shadow-xl transition hover:-translate-y-1 hover:shadow-2xl"
+        >
           ייצא ל-Google Sheets
         </button>
       </div>
@@ -646,73 +290,236 @@
   </main>
 
   <script>
-    let globalCsvData = "";
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ2-uZsyB7_4A6t-z0p14rzaUzY-XnAsIOvl7cRYDpsykD6zytMHnHwXUsz-zSXyG3Dg/exec';
 
-    const form = document.getElementById("stockForm");
-    const messageArea = document.getElementById("messageArea");
-    const previewTable = document.getElementById("previewTable");
-    const exportActions = document.getElementById("exportActions");
-    const downloadCsvBtn = document.getElementById("downloadCsvBtn");
-    const exportSheetBtn = document.getElementById("exportSheetBtn");
+    let csvData = '';
 
-    form.addEventListener("submit", function (event) {
+    const form = document.getElementById('stockForm');
+    const messageArea = document.getElementById('messageArea');
+    const previewTable = document.getElementById('previewTable');
+    const exportActions = document.getElementById('exportActions');
+    const loadBtn = document.getElementById('loadBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    const exportSheetBtn = document.getElementById('exportSheetBtn');
+
+    function showError(message) {
+      messageArea.innerHTML = `
+        <div class="fade-in rounded-3xl border border-rose-200 bg-rose-50/90 p-5 shadow-lg">
+          <div class="flex items-start gap-4">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-2xl">!</div>
+            <div>
+              <h3 class="font-black text-rose-700">אופס! משהו דורש תיקון</h3>
+              <p class="mt-1 text-rose-700">${message}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showSuccess(message, linkUrl) {
+      messageArea.innerHTML = `
+        <div class="fade-in rounded-3xl border border-emerald-200 bg-emerald-50/90 p-5 shadow-lg">
+          <div class="flex items-start gap-4">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">✓</div>
+            <div>
+              <h3 class="font-black text-emerald-800">הפעולה הושלמה בהצלחה</h3>
+              <p class="mt-1 text-emerald-700">${message}</p>
+              ${linkUrl ? `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex rounded-2xl bg-emerald-600 px-5 py-3 font-black text-white shadow-lg transition hover:bg-emerald-700">פתח את הגיליון</a>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showLoader(text) {
+      messageArea.innerHTML = `
+        <div class="fade-in rounded-3xl border border-blue-200 bg-white/70 p-6 shadow-xl backdrop-blur-xl">
+          <div class="flex flex-col items-center justify-center gap-4 text-center sm:flex-row">
+            <div class="loader-ring"></div>
+            <div>
+              <h3 class="text-xl font-black text-slate-800">${text}</h3>
+              <p class="mt-1 text-slate-500">רגע קטן, המערכת מעבדת את הבקשה...</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function clearMessages() {
+      messageArea.innerHTML = '';
+    }
+
+    function validateForm() {
+      const tickers = document.getElementById('tickers').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      if (!tickers) {
+        showError('יש להזין לפחות סימול מניה אחד לפני טעינת הנתונים.');
+        return false;
+      }
+
+      if (!startDate || !endDate) {
+        showError('יש לבחור גם תאריך התחלה וגם תאריך סיום.');
+        return false;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        showError('נראה שתאריך ההתחלה מאוחר מתאריך הסיום. יש לבחור טווח תאריכים תקין.');
+        return false;
+      }
+
+      return true;
+    }
+
+    function parseCsv(csvText) {
+      return csvText
+        .trim()
+        .split(/\r?\n/)
+        .map(row => row.split(',').map(cell => cell.trim()));
+    }
+
+    function buildPreviewTable(csvText) {
+      const rows = parseCsv(csvText);
+
+      if (!rows.length || !rows[0].length) {
+        previewTable.innerHTML = `
+          <div class="rounded-3xl border border-amber-200 bg-amber-50/90 p-5 text-amber-800 shadow-lg">
+            לא נמצאו נתונים להצגה.
+          </div>
+        `;
+        return;
+      }
+
+      const headers = rows[0];
+      const bodyRows = rows.slice(1, 7);
+
+      previewTable.innerHTML = `
+        <div class="fade-in overflow-hidden rounded-3xl border border-slate-200 bg-white/85 shadow-2xl backdrop-blur-xl">
+          <div class="flex flex-col gap-2 border-b border-slate-200 bg-gradient-to-l from-slate-950 via-blue-950 to-teal-900 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-2xl font-black">תצוגה מקדימה</h2>
+              <p class="mt-1 text-sm text-blue-100">מוצגות עד 6 השורות הראשונות מתוך הנתונים שהתקבלו</p>
+            </div>
+            <div class="rounded-full bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur">
+              ${Math.max(rows.length - 1, 0)} רשומות
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] border-collapse text-right">
+              <thead>
+                <tr class="bg-slate-100/90">
+                  ${headers.map(header => `
+                    <th class="border-b border-slate-200 px-5 py-4 text-sm font-black text-slate-700">
+                      ${header || '-'}
+                    </th>
+                  `).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${bodyRows.map((row, index) => `
+                  <tr class="${index % 2 === 0 ? 'bg-white/75' : 'bg-slate-50/75'} transition hover:bg-blue-50/80">
+                    ${headers.map((_, cellIndex) => `
+                      <td class="border-b border-slate-100 px-5 py-4 text-sm font-semibold text-slate-700">
+                        ${row[cellIndex] || '-'}
+                      </td>
+                    `).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function fetchStockData(actionValue) {
+      const payload = {
+        tickers: document.getElementById('tickers').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        frequency: document.getElementById('frequency').value,
+        action: actionValue
+      };
+
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('השרת החזיר שגיאה.');
+      }
+
+      return response.json();
+    }
+
+    form.addEventListener('submit', async function (event) {
       event.preventDefault();
 
-      clearOutput();
+      previewTable.innerHTML = '';
+      exportActions.classList.add('hidden');
 
-      const validationMessage = validateForm();
-
-      if (validationMessage) {
-        showError(validationMessage);
+      if (!validateForm()) {
         return;
       }
 
-      showLoader("מושך נתוני שוק...");
+      showLoader('מושך נתוני שוק...');
+      loadBtn.disabled = true;
+      loadBtn.classList.add('opacity-70', 'cursor-not-allowed');
 
-      const payload = {
-        tickers: document.getElementById('tickers').value,
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        frequency: document.getElementById('frequency').value,
-        action: 'csv'
-      };
+      try {
+        const payload = {
+          tickers: document.getElementById('tickers').value,
+          startDate: document.getElementById('startDate').value,
+          endDate: document.getElementById('endDate').value,
+          frequency: document.getElementById('frequency').value,
+          action: 'csv'
+        };
 
-      runServer(payload);
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('השרת החזיר שגיאה.');
+        }
+
+        const result = await response.json();
+
+        csvData = result.csvData || result.csv || result.data || '';
+
+        if (!csvData) {
+          throw new Error('לא התקבלו נתוני CSV מהשרת.');
+        }
+
+        clearMessages();
+        buildPreviewTable(csvData);
+        exportActions.classList.remove('hidden');
+      } catch (error) {
+        showError(error.message || 'לא הצלחנו לטעון את הנתונים. נסה שוב בעוד רגע.');
+      } finally {
+        loadBtn.disabled = false;
+        loadBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
     });
 
-    exportSheetBtn.addEventListener("click", function () {
-      const validationMessage = validateForm();
-
-      if (validationMessage) {
-        showError(validationMessage);
+    downloadCsvBtn.addEventListener('click', function () {
+      if (!csvData) {
+        showError('אין עדיין נתונים להורדה. יש לטעון נתונים קודם.');
         return;
       }
 
-      showLoader("יוצר גיליון Google Sheets...");
-
-      const payload = {
-        tickers: document.getElementById('tickers').value,
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        frequency: document.getElementById('frequency').value,
-        action: 'sheet'
-      };
-
-      runServer(payload);
-    });
-
-    downloadCsvBtn.addEventListener("click", function () {
-      if (!globalCsvData) {
-        showError("אין נתונים זמינים להורדה.");
-        return;
-      }
-
-      const blob = new Blob([globalCsvData], { type: "text/csv;charset=utf-8" });
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-      const link = document.createElement("a");
       link.href = url;
-      link.download = "stock_prices.csv";
+      link.download = 'stock-data.csv';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -720,266 +527,49 @@
       URL.revokeObjectURL(url);
     });
 
-    function runServer(payload) {
-      if (!window.google || !google.script || !google.script.run) {
-        showError("העמוד הזה חייב לרוץ מתוך Google Apps Script HtmlService. אם פתחת אותו כקובץ רגיל או דרך GitHub Pages, google.script.run לא יהיה זמין.");
+    exportSheetBtn.addEventListener('click', async function () {
+      if (!validateForm()) {
         return;
       }
 
-      google.script.run
-        .withSuccessHandler(function (result) {
-          handleServerSuccess(result, payload.action);
-        })
-        .withFailureHandler(function (error) {
-          showError("שגיאת שרת: " + (error && error.message ? error.message : error));
-        })
-        .handleClientRequest(payload);
-    }
+      showLoader('מייצא ל-Google Sheets...');
+      exportSheetBtn.disabled = true;
+      exportSheetBtn.classList.add('opacity-70', 'cursor-not-allowed');
 
-    function handleServerSuccess(result, action) {
-      if (!result) {
-        showError("השרת לא החזיר תשובה.");
-        return;
-      }
+      try {
+        const payload = {
+          tickers: document.getElementById('tickers').value,
+          startDate: document.getElementById('startDate').value,
+          endDate: document.getElementById('endDate').value,
+          frequency: document.getElementById('frequency').value,
+          action: 'sheet'
+        };
 
-      if (typeof result === "string") {
-        try {
-          result = JSON.parse(result);
-        } catch (error) {
-          showError("השרת החזיר טקסט שאינו JSON תקין.");
-          return;
-        }
-      }
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload)
+        });
 
-      if (result.status !== "success") {
-        showError(result.message || "אירעה שגיאה לא ידועה.");
-        return;
-      }
-
-      if (action === "csv") {
-        globalCsvData = result.csvData || "";
-
-        if (!globalCsvData) {
-          showError("לא התקבלו נתוני CSV להצגה.");
-          return;
+        if (!response.ok) {
+          throw new Error('השרת החזיר שגיאה.');
         }
 
-        showSuccess("הנתונים נטענו בהצלחה. אפשר לצפות בתצוגה המקדימה או לייצא את הקובץ.");
-        buildPreviewTable(globalCsvData);
-        exportActions.classList.remove("hidden");
-        return;
-      }
+        const result = await response.json();
+        const sheetUrl = result.sheetUrl || result.url || '';
 
-      if (action === "sheet") {
-        if (!result.sheetUrl) {
-          showError("השרת לא החזיר קישור לגיליון.");
-          return;
+        if (!sheetUrl) {
+          throw new Error('הייצוא הצליח, אך לא התקבל קישור לגיליון.');
         }
 
-        showSheetSuccess(result.sheetUrl);
+        showSuccess('הנתונים יוצאו בהצלחה לגיליון חדש.', sheetUrl);
+      } catch (error) {
+        showError(error.message || 'לא הצלחנו לייצא את הנתונים ל-Google Sheets.');
+      } finally {
+        exportSheetBtn.disabled = false;
+        exportSheetBtn.classList.remove('opacity-70', 'cursor-not-allowed');
       }
-    }
-
-    function validateForm() {
-      const tickers = document.getElementById("tickers").value.trim();
-      const startDate = document.getElementById("startDate").value;
-      const endDate = document.getElementById("endDate").value;
-
-      if (!tickers) {
-        return "אופס! צריך להזין לפחות סימול מניה אחד.";
-      }
-
-      if (!startDate || !endDate) {
-        return "אופס! צריך לבחור גם תאריך התחלה וגם תאריך סיום.";
-      }
-
-      if (new Date(startDate) > new Date(endDate)) {
-        return "אופס! נראה שתאריך ההתחלה מאוחר מתאריך הסיום. כדאי להפוך ביניהם ולנסות שוב.";
-      }
-
-      return "";
-    }
-
-    function clearOutput() {
-      messageArea.innerHTML = "";
-      previewTable.innerHTML = "";
-      exportActions.classList.add("hidden");
-    }
-
-    function showLoader(text) {
-      messageArea.innerHTML = `
-        <div class="loader-card">
-          <div class="loader-content">
-            <div class="loader-orbit"></div>
-            <div>
-              <h2 class="loader-title">${escapeHtml(text)}</h2>
-              <p class="loader-text">המערכת מרכזת נתונים, מסדרת תאריכים ומכינה טבלה חכמה.</p>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function showError(message) {
-      messageArea.innerHTML = `
-        <div class="alert alert-error">
-          <div class="alert-row">
-            <div class="alert-icon">!</div>
-            <div>
-              <h2>שגיאה קטנה בדרך</h2>
-              <p>${escapeHtml(message)}</p>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function showSuccess(message) {
-      messageArea.innerHTML = `
-        <div class="alert alert-success">
-          <div class="alert-row">
-            <div class="alert-icon">✓</div>
-            <div>
-              <h2>הצלחה</h2>
-              <p>${escapeHtml(message)}</p>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function showSheetSuccess(sheetUrl) {
-      messageArea.innerHTML = `
-        <div class="sheet-success-card">
-          <div class="sheet-success-content">
-            <div>
-              <h2>הגיליון נוצר בהצלחה</h2>
-              <p>אפשר לפתוח את הקובץ החדש ב־Google Sheets.</p>
-            </div>
-
-            <a
-              href="${escapeAttribute(sheetUrl)}"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="sheet-link"
-            >
-              פתח את הגיליון
-            </a>
-          </div>
-        </div>
-      `;
-    }
-
-    function buildPreviewTable(csvData) {
-      const rows = parseCsv(csvData);
-
-      if (!rows.length) {
-        previewTable.innerHTML = "";
-        return;
-      }
-
-      const previewRows = rows.slice(0, 7);
-      const header = previewRows[0];
-      const bodyRows = previewRows.slice(1);
-
-      const headerHtml = header.map(cell => `<th>${escapeHtml(cell)}</th>`).join("");
-
-      const bodyHtml = bodyRows.map(row => {
-        const cells = header.map((_, cellIndex) => {
-          const cell = row[cellIndex] || "";
-          return `<td>${escapeHtml(cell)}</td>`;
-        }).join("");
-
-        return `<tr>${cells}</tr>`;
-      }).join("");
-
-      previewTable.innerHTML = `
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h2>תצוגה מקדימה</h2>
-              <p>מוצגות עד 6 השורות הראשונות מתוך הנתונים.</p>
-            </div>
-
-            <div class="rows-pill">
-              ${rows.length - 1} שורות נתונים
-            </div>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>${headerHtml}</tr>
-              </thead>
-              <tbody>${bodyHtml}</tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-
-    function parseCsv(csvText) {
-      const rows = [];
-      let row = [];
-      let cell = "";
-      let insideQuotes = false;
-
-      for (let i = 0; i < csvText.length; i++) {
-        const char = csvText[i];
-        const nextChar = csvText[i + 1];
-
-        if (char === '"' && insideQuotes && nextChar === '"') {
-          cell += '"';
-          i++;
-          continue;
-        }
-
-        if (char === '"') {
-          insideQuotes = !insideQuotes;
-          continue;
-        }
-
-        if (char === "," && !insideQuotes) {
-          row.push(cell);
-          cell = "";
-          continue;
-        }
-
-        if ((char === "\n" || char === "\r") && !insideQuotes) {
-          if (char === "\r" && nextChar === "\n") {
-            i++;
-          }
-
-          row.push(cell);
-          rows.push(row);
-          row = [];
-          cell = "";
-          continue;
-        }
-
-        cell += char;
-      }
-
-      if (cell || row.length) {
-        row.push(cell);
-        rows.push(row);
-      }
-
-      return rows.filter(currentRow => currentRow.some(currentCell => currentCell !== ""));
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function escapeAttribute(value) {
-      return escapeHtml(value).replaceAll("`", "&#096;");
-    }
+    });
   </script>
 </body>
 </html>
